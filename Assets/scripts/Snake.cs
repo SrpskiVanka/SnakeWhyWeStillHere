@@ -11,8 +11,9 @@ public class Snake : MonoBehaviour
     public List<Transform> Children;
     public GameObject tailPrefab;
     public Field field;
-        
-        IEnumerator moveSnake()
+    public Vector3 turnPosition;
+
+    IEnumerator moveSnake()
     {
         while (true)
         {
@@ -25,6 +26,11 @@ public class Snake : MonoBehaviour
                 Children[i].position = Children[i - 1].position;
             }
 
+            if (Children.Any(x=>x.position == transform.position))
+            {
+                Restart();
+            }
+
             if (n >= 0)
             {
                 Children[0].position = headPosition;
@@ -32,17 +38,23 @@ public class Snake : MonoBehaviour
 
             if (field.Inside(transform.position) == false)
             {
-                transform.position = Vector3.zero;
-                direction = Vector2.zero;
-                foreach (var child in Children)
-                {
-                    Destroy(child.gameObject);
-                }
-                Children.Clear();
-                Destroy(field.foodInstance.gameObject);
-                field.CreateFood();
+                Restart();
             }
         }
+    }
+
+    private void Restart()
+    {
+        transform.position = Vector3.zero;
+        direction = Vector2.zero;
+        foreach (var child in Children)
+        {
+            Destroy(child.gameObject);
+        }
+
+        Children.Clear();
+        Destroy(field.foodInstance.gameObject);
+        field.CreateFood();
     }
 
 
@@ -50,6 +62,7 @@ public class Snake : MonoBehaviour
     void Start()
     {
         transform.position = Vector3.zero;
+        turnPosition = new Vector3(1, 1);
         direction = Vector2.zero;
         StartCoroutine(moveSnake());
     }
@@ -57,31 +70,38 @@ public class Snake : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.UpArrow) && direction.y == 0)
+        if (transform.position != turnPosition)
         {
-            direction = Vector2.up;
-        }
+            if (Input.GetKeyDown(KeyCode.UpArrow) && direction.y == 0)
+            {
+                direction = Vector2.up;
+                turnPosition = transform.position;
+            }
 
-        if (Input.GetKeyDown(KeyCode.DownArrow) && direction.y == 0)
-        {
-            direction = Vector2.down;
-        }
+            else if (Input.GetKeyDown(KeyCode.DownArrow) && direction.y == 0)
+            {
+                direction = Vector2.down;
+                turnPosition = transform.position;
+            }
 
-        if (Input.GetKeyDown(KeyCode.LeftArrow) && direction.x == 0)
-        {
-            direction = Vector2.left;
-        }
+            else if (Input.GetKeyDown(KeyCode.LeftArrow) && direction.x == 0)
+            {
+                direction = Vector2.left;
+                turnPosition = transform.position;
+            }
 
-        if (Input.GetKeyDown(KeyCode.RightArrow) && direction.x == 0)
-        {
-            direction = Vector2.right;
-        }
+            else if (Input.GetKeyDown(KeyCode.RightArrow) && direction.x == 0)
+            {
+                direction = Vector2.right;
+                turnPosition = transform.position;
+            }
 
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            AddTail();
+            else if (Input.GetKeyDown(KeyCode.Q))
+            {
+                AddTail();
+            }
+         
         }
-
         if (field.foodInstance != null)
         {
             int snakeX = (int) gameObject.transform.position.x;
@@ -97,8 +117,8 @@ public class Snake : MonoBehaviour
                 AddTail();
             }
         }
-        }
-
+    }
+    
     private void AddTail()
     {
         var newTail = Instantiate(tailPrefab);
@@ -114,6 +134,5 @@ public class Snake : MonoBehaviour
 
         newTail.transform.position = position;
         Children.Add(newTail.transform);
-        
     }
 }
