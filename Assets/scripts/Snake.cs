@@ -12,6 +12,10 @@ public class Snake : MonoBehaviour
     public GameObject tailPrefab;
     public Field field;
     public Vector3 turnPosition;
+    private bool upKeyDown;
+    private bool downKeyDown;
+    private bool rightKeyDown;
+    private bool leftKeyDown;
 
     IEnumerator moveSnake()
     {
@@ -19,19 +23,19 @@ public class Snake : MonoBehaviour
         {
             yield return new WaitForSeconds(0.3f);
             var headPosition = transform.position;
-            transform.position += (Vector3) direction / 2;
-            var n = Children.Count - 1;
-            for (var i = n; i > 0; i--)
+            transform.position += (Vector3) direction;
+            var n = Children.Count;
+            for (var i = n-1; i > 0; i--)
             {
                 Children[i].position = Children[i - 1].position;
             }
 
-            if (Children.Any(x=>x.position == transform.position))
+            if (Children.Any(x => x.position == transform.position))
             {
                 Restart();
             }
 
-            if (n >= 0)
+            if (n > 0)
             {
                 Children[0].position = headPosition;
             }
@@ -47,6 +51,7 @@ public class Snake : MonoBehaviour
     {
         transform.position = Vector3.zero;
         direction = Vector2.zero;
+        turnPosition = new Vector3(1, 1);
         foreach (var child in Children)
         {
             Destroy(child.gameObject);
@@ -54,13 +59,13 @@ public class Snake : MonoBehaviour
 
         Children.Clear();
         Destroy(field.foodInstance.gameObject);
-        field.CreateFood();
+        field.CreateFood(this);
     }
-
-
-    // Start is called before the first frame update
+    
     void Start()
     {
+        field.CreateFood(this);
+        GameAnalyticsSDK.GameAnalytics.Initialize();
         transform.position = Vector3.zero;
         turnPosition = new Vector3(1, 1);
         direction = Vector2.zero;
@@ -72,25 +77,31 @@ public class Snake : MonoBehaviour
     {
         if (transform.position != turnPosition)
         {
-            if (Input.GetKeyDown(KeyCode.UpArrow) && direction.y == 0)
+            upKeyDown |= Input.GetKeyDown(KeyCode.UpArrow);
+            downKeyDown |= Input.GetKeyDown(KeyCode.DownArrow);
+            leftKeyDown |= Input.GetKeyDown(KeyCode.LeftArrow);
+            rightKeyDown |= Input.GetKeyDown(KeyCode.RightArrow);
+
+
+            if (upKeyDown && direction.y == 0)
             {
                 direction = Vector2.up;
                 turnPosition = transform.position;
             }
 
-            else if (Input.GetKeyDown(KeyCode.DownArrow) && direction.y == 0)
+            else if (downKeyDown && direction.y == 0)
             {
                 direction = Vector2.down;
                 turnPosition = transform.position;
             }
 
-            else if (Input.GetKeyDown(KeyCode.LeftArrow) && direction.x == 0)
+            else if (leftKeyDown && direction.x == 0)
             {
                 direction = Vector2.left;
                 turnPosition = transform.position;
             }
 
-            else if (Input.GetKeyDown(KeyCode.RightArrow) && direction.x == 0)
+            else if (rightKeyDown && direction.x == 0)
             {
                 direction = Vector2.right;
                 turnPosition = transform.position;
@@ -100,8 +111,8 @@ public class Snake : MonoBehaviour
             {
                 AddTail();
             }
-         
         }
+
         if (field.foodInstance != null)
         {
             int snakeX = (int) gameObject.transform.position.x;
@@ -113,12 +124,17 @@ public class Snake : MonoBehaviour
             if (snakeX == foodX && snakeY == foodY)
             {
                 Destroy(food.gameObject);
-                field.CreateFood();
+                field.CreateFood(this);
                 AddTail();
             }
         }
+
+        upKeyDown = false;
+        downKeyDown = false;
+        rightKeyDown = false;
+        leftKeyDown = false;
     }
-    
+
     private void AddTail()
     {
         var newTail = Instantiate(tailPrefab);
@@ -134,5 +150,25 @@ public class Snake : MonoBehaviour
 
         newTail.transform.position = position;
         Children.Add(newTail.transform);
+    }
+
+    public void UpButtonClick()
+    {
+        upKeyDown = true;
+    }
+
+    public void DownButtonClick()
+    {
+        downKeyDown = true;
+    }
+
+    public void LeftButtonClick()
+    {
+        leftKeyDown = true;
+    }
+
+    public void RightButtonClick()
+    {
+        rightKeyDown = true;
     }
 }
